@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calcul des montants Astreinte/HNO du mois</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #f2f2f2;
+        }
+        .container {
+            text-align: center;
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            color: white;
+            background-color: orange;
+            padding: 10px;
+            border-radius: 5px;
+        }
+        form {
+            margin-top: 20px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+        }
+        input, select {
+            padding: 8px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        .result {
+            margin-top: 20px;
+            font-size: 1.2em;
+            color: red;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Calcul des montants Astreinte/HNO du mois</h1>
+        <form method="POST">
+            <div class="form-group">
+                <label for="service_type">Type de prestation:</label>
+                <select name="service_type" id="service_type" required>
+                    <option value="hno">HNO</option>
+                    <option value="astreinte">Astreinte</option>
+                </select>
+            </div>
+
+            <div id="hno-fields" class="form-group">
+                <label for="day_type">Type de jour:</label>
+                <select name="day_type" id="day_type">
+                    <option value="weeknight">Semaine de 22h à 6h</option>
+                    <option value="saturday">Samedi</option>
+                    <option value="sunday">Dimanche</option>
+                    <option value="may_1">1er mai</option>
+                </select>
+            </div>
+
+            <div id="time-fields" class="form-group">
+                <label for="hours">Heures:</label>
+                <input type="number" name="hours" id="hours" value="0" min="0">
+                <label for="minutes">Minutes:</label>
+                <input type="number" name="minutes" id="minutes" value="0" min="0">
+            </div>
+
+            <div id="astreinte-fields" style="display:none;">
+                <div class="form-group">
+                    <label for="start_date">Date de début:</label>
+                    <input type="date" name="start_date" id="start_date">
+                </div>
+                <div class="form-group">
+                    <label for="start_time">Heure de début:</label>
+                    <input type="time" name="start_time" id="start_time">
+                </div>
+                <div class="form-group">
+                    <label for="end_date">Date de fin:</label>
+                    <input type="date" name="end_date" id="end_date">
+                </div>
+                <div class="form-group">
+                    <label for="end_time">Heure de fin:</label>
+                    <input type="time" name="end_time" id="end_time">
+                </div>
+            </div>
+
+            <button type="submit">Calculer</button>
+        </form>
+
+        {% if result is not none %}
+            <div class="result">
+                <p>Montant total à titre indicatif: {{ result }} euros</p>
+            </div>
+        {% endif %}
+    </div>
+
+    <script>
+        const serviceType = document.getElementById('service_type');
+        const hnoFields = document.getElementById('hno-fields');
+        const timeFields = document.getElementById('time-fields');
+        const astreinteFields = document.getElementById('astreinte-fields');
+
+        serviceType.addEventListener('change', function() {
+            if (this.value === 'hno') {
+                hnoFields.style.display = 'block';
+                timeFields.style.display = 'block';
+                astreinteFields.style.display = 'none';
+            } else {
+                hnoFields.style.display = 'none';
+                timeFields.style.display = 'none';
+                astreinteFields.style.display = 'block';
+            }
+        });
+    </script>
+</body>
+</html>
