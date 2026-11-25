@@ -95,5 +95,4 @@ sur libxml2 est indiquée sans correctif dans le rapport.
 
 Image publiée : flaeflo/quiz-docker:secure-v2
 Docker Hub : https://hub.docker.com/r/flaeflo/quiz-docker
-Visibilité publique : à vérifier.
-Dépôt Git : lien à compléter après publication.
+
