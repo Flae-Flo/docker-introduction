@@ -41,8 +41,26 @@ docker run --rm alpine sh -c "if test -f /tmp/temoin.txt; then echo PRESENT; els
 ### Questions
 
 - Quel résultat obtenez-vous dans le premier conteneur, puis dans le second ?
+Voilà ce que j'obtiens lors de la création du premier conteneur : 
+"docker run --name tp-sans-volume alpine sh -c "echo Donnee-temporaire > /tmp/temoin.txt && cat /tmp/temoin.txt"
+Unable to find image 'alpine:latest' locally
+latest: Pulling from library/alpine
+881fc932939e: Pull complete
+86ff264fe568: Download complete
+c35a7d82b8fa: Download complete
+Digest: sha256:f59abe656b692d901e184be3445e084786602108599d2a51d229c0f5a48c71bf
+Status: Downloaded newer image for alpine:latest
+Donnee-temporaire"
+On voit qu'il y a bien "Donnee-temporaire" qui apparait 
+Puis 
+"docker run --rm alpine sh -c "if test -f /tmp/temoin.txt; then echo PRESENT; else echo ABSENT; fi"
+ABSENT"
+
 - Pourquoi utiliser la même image Alpine ne suffit-il pas à retrouver le fichier ?
+Même si on utilise la même image Alpine, chaque conteneur possède son propre file system isolé. Le fichier temoin.txt est créé dans le premier conteneur mais pas dans l'image. Donc si on supprime le conteneur, on supprime tout ce qui est dedans donc tous les fichiers
+
 - Dans quels cas la perte de ces données poserait-elle problème ?
+Si jamais les documents sont importants, qu'on a besoin de garder ces données
 
 **Résultat attendu :** `Donnee-temporaire`, puis `ABSENT`.
 
@@ -61,9 +79,18 @@ docker volume inspect tp-volume
 ### Questions
 
 - Quelle est la valeur de `Name` ?
+La valeur de Name est "tp-volume", c'est le nom donné au volume lors de sa création
+
 - À quoi correspondent `Driver`, `Mountpoint` et `Scope` ?
+Driver correspond au pilote utilisé pour gérer le volume, ici "local"
+Mountpoint correspond au chemin où sont stockées les données du volume
+Scope correspond à la portée du volume, ici "local" donc propre à l'hôte Docker
+
 - Sur Docker Desktop, pourquoi le chemin `Mountpoint` n'est-il pas nécessairement directement visible dans l'explorateur de fichiers Windows ou Finder ?
+Parce que Docker Desktop utilise une machine virtuelle Linux. Donc le chemin correspond à un répertoire dans cette VM et non directement sur mon Windows ou si j'étais sur un mac
+
 - Le volume est-il lié à un conteneur particulier ?
+Non, le volume est indépendant du conteneur. On peut donc supprimer le conteneur sans perdre les données du volume et réutiliser le même volume dans un autre conteneur
 
 **Résultat attendu :** un volume `tp-volume` existe, généralement avec le driver `local`.
 
@@ -100,8 +127,13 @@ docker volume inspect tp-volume
 ### Questions
 
 - Le fichier subsiste-t-il après suppression du premier conteneur ?
+Oui, même après avoir supprimé le premier conteneur, on retrouve bien "Donnee-persistante" dans le second conteneur
+
 - Quelle différence constatez-vous avec l'exercice 1 ?
+Dans l'exercice 1, on ne retrouvait pas le fichier lors de la création du second conteneur. Là, grâce au volume, on retrouve bien le fichier même si ce n'est pas le même conteneur
+
 - Quel composant porte la durée de vie du fichier : le conteneur ou le volume ?
+C'est le volume, car le fichier est stocké dans celui-ci et non directement dans le file system du conteneur. Donc tant qu'on conserve le volume, on conserve les données même si on supprime le conteneur
 
 **Résultat attendu :** `Donnee-persistante` est affiché depuis le second conteneur.
 
@@ -151,8 +183,13 @@ docker rm -f tp-ecrivain-partage
 ### Questions
 
 - Les deux conteneurs voient-ils les mêmes fichiers ?
+Oui, on voit bien que le second conteneur affiche "Message-du-conteneur-A" puis "Message-modifie" après avoir modifié le fichier depuis le premier conteneur
+
 - Pourquoi le montage du lecteur utilise-t-il `readonly` ?
+Parce qu'on veut seulement que le second conteneur puisse lire les données du volume et non les modifier ou les supprimer
+
 - Quels risques existeraient si deux applications modifiaient simultanément les mêmes fichiers ?
+On risquerait d'écraser les modifications faites par l'autre application, de perdre des données ou de corrompre les fichiers
 
 **Résultat attendu :** le lecteur affiche successivement `Message-du-conteneur-A` puis `Message-modifie`.
 
@@ -220,9 +257,17 @@ docker rm -f tp-nginx-bind
 ### Questions
 
 - Pourquoi la page change-t-elle sans reconstruire une image ?
+Parce qu'avec le Bind Mount, le conteneur utilise directement le fichier index.html présent sur mon ordi 
+Donc quand je modifie le fichier en local et que j'actualise ma page, on voit directement les modifications sans avoir besoin de recréer le conteneur ou l'image.
+
 - Dans `docker inspect`, quelle est la valeur du type de montage (`Type`) ?
+La valeur de Type est "bind", on le retrouve dans la partie "Mounts" du résultat de la commande
+
 - Que signifie `readonly` ?
+Ça signifie que le conteneur a accès aux fichiers en lecture seule
+
 - Les fichiers du dossier local sont-ils supprimés avec le conteneur ?
+Non, le fichier index.html est toujours présent dans mon dossier site-web, stockés sur mon ordinateur et donc indépendants du conteneur
 
 **Résultat attendu :** les modifications locales sont visibles après actualisation et le fichier reste sur l'hôte.
 
@@ -255,16 +300,27 @@ docker rm -f tp-nginx-sans-bind
 
 | Situation                                                    | Volume nommé, Bind Mount ou aucun montage ? | Justification |
 | ------------------------------------------------------------ | ------------------------------------------- | ------------- |
-| Faire persister des fichiers de base de données              |                                             |               |
-| Voir instantanément les modifications d'un site HTML local   |                                             |               |
-| Exécuter une application temporaire sans données à conserver |                                             |               |
-| Conserver des données lors de la recréation d'un conteneur   |                                             |               |
+| Faire persister des fichiers de base de données              | Volume nommé                                | Pour conserver les données même si on supprime le conteneur             |
+
+| Voir instantanément les modifications d'un site HTML local   | Bind Mount                                  | Pour retrouver directement les modifications faites sur mon ordinateur               |
+
+| Exécuter une application temporaire sans données à conserver | Aucun montage                               | On n'a pas besoin de conserver les données              |
+
+| Conserver des données lors de la recréation d'un conteneur   | Volume nommé ou Bind Mount                  | Les données sont stockées indépendamment du conteneur               |
 
 ### Questions
 
 - Quelle est la différence entre un chemin géré par Docker et un chemin explicitement choisi sur l'hôte ?
+Avec un volume nommé, c'est Docker qui gère l'emplacement où sont stockées les données 
+Avec un Bind Mount, c'est moi qui choisis directement le dossier sur mon ordinateur
+
 - Un volume nommé et un Bind Mount permettent-ils tous les deux la persistance ?
+Oui, dans les deux cas les données sont stockées indépendamment du conteneur 
+Donc même si on supprime le conteneur, on conserve les données
+
 - Pourquoi faut-il éviter de confondre « persistance » et « sauvegarde » ?
+Parce que même si les données sont persistantes, elles peuvent être supprimées ou corrompues
+Si on n'a pas fait de sauvegarde de ces données, on risque de ne pas pouvoir les récupérer
 
 ---
 
@@ -309,8 +365,14 @@ docker run --rm --mount type=volume,source=tp-nettoyage,target=/data alpine ls -
 ### Questions
 
 - Le fichier `important.txt` est-il encore présent après recréation du volume ?
+Non, on voit bien que le dossier /data est vide après avoir recréé le volume 
+Même si on utilise le même nom, c'est un nouveau volume qui ne contient pas les anciennes données
+
 - Pourquoi `docker volume prune --all` peut-il être risqué ?
+Parce que cette commande supprime tous les volumes qui ne sont utilisés par aucun conteneur. On risque donc de supprimer des volumes appartenant à d'autres projets et de perdre des données
+
 - Que faut-il faire avant de supprimer le volume d'une application de production ?
+Il faut vérifier que le volume n'est plus nécessaire à l'application et faire une sauvegarde des données avant de le supprimer pour pouvoir les récupérer si besoin
 
 **Attention :** n'exécutez pas `docker volume prune --all` durant ce TP. La commande pourrait supprimer les volumes nommés inutilisés d'autres projets.
 
@@ -417,10 +479,20 @@ Pour quitter `psql`, saisissez `\q`.
 Répondez :
 
 1. Pourquoi les données sont-elles conservées alors que le conteneur a été supprimé ?
+Parce que les données sont enregistrées dans un volume nommé géré par Docker et non dans la couche du conteneur 
+On peut donc supprimer et recréer le conteneur sans perdre les données
+
 2. Que se passerait-il si vous recréiez PostgreSQL avec un **nouveau volume vide** ?
+PostgreSQL initialiserait une nouvelle bdd vide 
+
 3. Pourquoi le volume ne remplace-t-il pas une sauvegarde ?
+Parce que même si les données sont persistantes, le volume peut être supprimé accidentellement, les données peuvent être corrompues ou autre du genre
+
 4. Quels risques présentent les modifications de version majeure de PostgreSQL ?
+Il peut y avoir des problèmes de compatibilité entre les différentes versions majeures de PostgreSQL
+
 5. Dans quel cas serait-il pertinent d'utiliser un Bind Mount à la place du volume nommé ?
+Il serait pertinent d'utiliser un Bind Mount si on souhaite choisir précisément l'emplacement où sont stockées les données
 
 ---
 

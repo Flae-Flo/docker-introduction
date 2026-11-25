@@ -1,0 +1,29 @@
+services:  # conteneurs, équivalent de docker container run
+  # Application python
+  python: # nom du conteneur, également nom DNS dans le réseau
+    container_name: docker_task # Optionnel 
+    build: .
+    image: docker_task:1.0 # Optionnel en cas de build:
+    depends_on:
+    - postgresql
+    environment: # Optionnel. Equivalent de -e dans docker container run
+      DB_HOST: postgresql
+      DB_PASSWORD: mysecretpassword
+      DB_USER: postgres
+      DB_NAME: postgres
+      DB_PORT: 5432
+    ports: # Optionnel. Equivalent de -p dans docker container run
+    - "8083:5000"
+  
+  postgresql: # nom du conteneur, également nom DNS dans le réseau
+    container_name: postgresql # Optionnel 
+    image: postgres:16 # Optionnel en cas de build:
+    environment: # Optionnel. Equivalent de -e dans docker container run
+      POSTGRES_PASSWORD: mysecretpassword
+      POSTGRES_USER: postgres
+      POSTGRES_DB: postgres
+    volumes: # Optionnel. Equivalent de -v dans docker container run
+    - postgres_data:/var/lib/postgresql/data
+
+volumes: # Optionnel. Equivalent de docker volume create
+ postgres_data:

@@ -1,0 +1,99 @@
+TP : Sécurisation d'un conteneur Docker
+Mission 3 : Comparer les résultats avant et après sécurisation
+Date : 25/11/2026
+
+1. Tableau comparatif
+
+Critère                         | Initiale          | Secure V1        | Secure V2
+--------------------------------|-------------------|------------------|------------------
+Image de base finale            | node:18-alpine    | Nginx Alpine     | Nginx Alpine
+Taille disque                   | 221 MB            | 90,2 MB          | 110 MB
+Taille compressée               | 54,8 MB           | 25,6 MB          | 31,4 MB
+Utilisateur                     | root              | nginx (101)      | nginx (101)
+Outils de développement         | Présents          | Non              | Non
+.dockerignore                   | Non               | Oui              | Oui
+Multi-stage build               | Non               | Oui              | Oui
+Limitation CPU                  | Non               | 0,5 CPU          | 0,5 CPU*
+Limitation mémoire              | Non               | 128 Mio          | 128 Mio*
+Suppression des capacités       | Non               | ALL              | ALL*
+No-new-privileges               | Non               | Oui              | Oui*
+Montage du socket Docker        | Non               | Non              | Non*
+Mise à jour des paquets Alpine  | Non               | Non              | Oui
+Nombre de paquets               | 272               | 86               | 86
+Paquets vulnérables             | 15                | 9                | 3
+CVE critiques                   | 7                 | 14               | 5
+CVE élevées                     | 42                | 32               | 3
+CVE moyennes                    | 31                | 14               | 8
+CVE faibles                     | 11                | 6                | 6
+Total des CVE                   | 91                | 66               | 22
+
+* Paramètres prévus dans la commande de démarrage de la V2. Les restrictions
+ont été vérifiées avec docker inspect sur la V1 ; l'utilisateur nginx et le
+fonctionnement ont également été vérifiés sur la V2.
+Les CVE correspondent aux résultats Docker Scout du 25/11/2026.
+
+2. Questions d'analyse
+
+Quelles modifications ont apporté les améliorations les plus significatives ?
+
+Le multi-stage build a permis de séparer la construction de l'application de
+son exécution. Node.js et les outils de développement ne sont plus nécessaires
+dans l'image finale. Le passage à un utilisateur non-root et la limitation des
+privilèges permettent de réduire les risques en cas de compromission.
+La mise à jour des paquets Alpine a permis de passer de 66 à 22 vulnérabilités.
+
+La taille de l'image a-t-elle diminué ? Pourquoi ?
+
+Oui, elle est passée de 221 MB à 110 MB, soit une réduction d'environ 50 %.
+Cela s'explique par le multi-stage build et l'utilisation de Nginx pour servir
+uniquement les fichiers compilés. La V2 est légèrement plus lourde que la V1
+car la mise à jour des paquets ajoute une couche supplémentaire à l'image.
+
+Quelles recommandations concernent le Dockerfile et lesquelles concernent
+l'exécution du conteneur ?
+
+Le Dockerfile concerne le choix des images de base, les tags versionnés,
+l'utilisation de COPY, le multi-stage build, la mise à jour des paquets et
+la définition de l'utilisateur non-root. Le .dockerignore concerne également
+la construction de l'image.
+Lors de l'exécution du conteneur, on limite le CPU, la mémoire et les capacités
+Linux, on empêche l'acquisition de nouveaux privilèges et on évite de monter
+le socket Docker. L'analyse des vulnérabilités doit être réalisée régulièrement.
+
+Votre image est-elle désormais totalement sécurisée ? Justifiez votre réponse.
+
+Non, même si l'image est mieux sécurisée, Docker Scout détecte encore 22
+vulnérabilités, dont 5 critiques concernant Nginx. Les restrictions mises en
+place réduisent les risques mais ne corrigent pas les vulnérabilités des paquets.
+L'image n'est donc pas prête pour une mise en production sans analyse et
+traitement des risques restants.
+
+Quelles mesures complémentaires proposeriez-vous pour un déploiement en production ?
+
+Je proposerais de mettre à jour les images et les paquets dès que les correctifs
+sont disponibles, d'intégrer Docker Scout dans la chaîne CI/CD et de bloquer
+les déploiements en fonction de la gravité des vulnérabilités. Il serait aussi
+pertinent de limiter les accès réseau, d'utiliser HTTPS, de superviser le
+conteneur et d'étudier un système de fichiers en lecture seule.
+
+3. Synthèse
+
+L'image initiale contenait 91 vulnérabilités et utilisait l'utilisateur root.
+Après la mise en place du multi-stage build et des restrictions de sécurité,
+l'image V1 contenait 66 vulnérabilités, mais le nombre de CVE critiques avait
+augmenté de 7 à 14. J'ai donc ajouté une mise à jour des paquets Alpine dans
+le Dockerfile. La V2 contient désormais 22 vulnérabilités, soit une diminution
+d'environ 76 % par rapport à l'image initiale. L'application fonctionne toujours
+et s'exécute avec l'utilisateur nginx.
+
+Les vulnérabilités restantes concernent Nginx, libxml2 et musl. Il reste notamment
+5 CVE critiques sur Nginx. Les versions correctives indiquées par Scout doivent
+être vérifiées dans les dépôts avant un déploiement en production. Une CVE faible
+sur libxml2 est indiquée sans correctif dans le rapport.
+
+4. Publication
+
+Image publiée : flaeflo/quiz-docker:secure-v2
+Docker Hub : https://hub.docker.com/r/flaeflo/quiz-docker
+Visibilité publique : à vérifier.
+Dépôt Git : lien à compléter après publication.

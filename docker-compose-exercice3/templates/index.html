@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Docker Tasks</title>
+<style>
+* { box-sizing: border-box; }
+body { margin: 0; padding: 3rem 1rem; background: #f5f3ff; color: #30204d; font: 16px system-ui, sans-serif; }
+main { max-width: 580px; margin: auto; background: white; padding: 2rem; border-radius: 18px; box-shadow: 0 10px 40px #30204d12; }
+h1 { margin: 0; } p { color: #75658e; }
+form { margin: 0; } .add { display: flex; gap: 8px; margin: 24px 0; }
+input { min-width: 0; flex: 1; border: 1px solid #ddd6fe; padding: 12px; border-radius: 8px; font: inherit; }
+button { cursor: pointer; border: 0; border-radius: 8px; padding: 10px 14px; background: #7c3aed; color: white; font: inherit; }
+ul { list-style: none; padding: 0; } li { display: flex; align-items: center; gap: 10px; padding: 12px 0; border-bottom: 1px solid #ede9fe; }
+.task { flex: 1; overflow-wrap: anywhere; } .done { text-decoration: line-through; color: #8b819b; }
+.toggle { background: #ede9fe; color: #5b21b6; } .delete { background: #fce7f3; color: #9d174d; }
+</style>
+</head>
+<body><main>
+<h1>Docker Tasks</h1><p>Ma liste de tâches personnelle</p>
+<form class="add" action="{{ url_for('add') }}" method="post">
+<input name="title" placeholder="Ajouter une tâche..." aria-label="Nouvelle tâche" required maxlength="200"><button>Ajouter</button>
+</form>
+<ul>
+{% for id, title, done in tasks %}
+<li>
+<form action="{{ url_for('toggle', task_id=id) }}" method="post"><button class="toggle" aria-label="Changer le statut">{{ '✓' if done else '○' }}</button></form>
+<span class="task {{ 'done' if done else '' }}">{{ title }}</span>
+<form action="{{ url_for('delete', task_id=id) }}" method="post"><button class="delete">Supprimer</button></form>
+</li>
+{% else %}<li>Aucune tâche pour le moment.</li>{% endfor %}
+</ul>
+<p>{{ completed }} tâche(s) terminée(s) sur {{ tasks|length }}</p>
+</main></body></html>

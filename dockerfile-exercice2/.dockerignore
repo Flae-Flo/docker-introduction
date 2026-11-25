@@ -1,0 +1,10 @@
+node_modules/
+dist/
+.git/
+.gitignore
+.env
+.env.*
+*.log
+audit-*.txt
+mission*-reponses.txt
+Dockerfile.initial

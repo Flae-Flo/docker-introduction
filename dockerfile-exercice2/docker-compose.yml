@@ -1,0 +1,8 @@
+services:  # conteneurs, équivalent de docker container run
+  quiz-docker: # nom du conteneur, également nom DNS dans le réseau
+    container_name: quiz-docker # Optionnel 
+    build: .
+    image: quiz-docker:secure # Optionnel en cas de build
+    restart: unless-stopped
+    ports:
+    - "8082:3000" # Optionnel. Equivalent de -p dans docker container run

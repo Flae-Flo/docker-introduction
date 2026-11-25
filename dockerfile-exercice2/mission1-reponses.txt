@@ -1,0 +1,27 @@
+TP : Sécurisation d'un conteneur Docker
+Mission 1 : Audit de l'image Docker existante
+
+1. L'image utilisée est-elle adaptée à une utilisation en production ?
+
+Non, même si l'application fonctionne, l'image utilise une version de Node.js qui n'est plus maintenue et le conteneur s'exécute avec l'utilisateur root. Docker Scout a également détecté 91 vulnérabilités dont 7 critiques et 42 élevées.
+
+2. Quels composants sont réellement nécessaires pour exécuter l'application ?
+
+Une fois l'application compilée, nous avons uniquement besoin des fichiers présents dans le dossier dist et d'un serveur web pour les rendre accessibles. Node.js est nécessaire pour la construction de l'application et pour utiliser serve, mais il est possible d'utiliser un autre serveur web pour ne pas avoir à conserver Node.js dans l'image finale. npm, Yarn et Vite ne sont pas nécessaires à l'exécution du quiz compilé.
+
+3. Quels risques de sécurité identifiez-vous ?
+
+- L'utilisation d'une version obsolète de Node.js.
+- L'exécution du conteneur avec l'utilisateur root, ce qui donne plus de droits que nécessaire à l'application.
+- La présence de composants inutiles en production qui augmentent la surface d'attaque.
+- La présence de 91 vulnérabilités, notamment au niveau d'OpenSSL.
+- Le risque de copier des fichiers inutiles ou sensibles avec COPY . si le fichier .dockerignore est absent ou mal configuré.
+- L'absence de limites de ressources, ce qui pourrait permettre au conteneur de consommer trop de CPU ou de RAM.
+
+4. Quelles améliorations recommanderiez-vous en priorité ?
+
+Je commencerais par utiliser une image de base minimale et maintenue, avec un tag précis. Je mettrais ensuite en place un build multi-étapes afin de séparer la construction de l'application de son exécution et de ne conserver que les composants nécessaires dans l'image finale.
+
+Je ferais également en sorte que l'application ne s'exécute plus avec l'utilisateur root, que les privilèges et les ressources du conteneur soient limités et que le fichier .dockerignore exclue les fichiers inutiles ou sensibles.
+
+Pour finir, je réaliserais une nouvelle analyse avec Docker Scout afin de comparer les résultats avant et après sécurisation.
